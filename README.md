@@ -6,6 +6,7 @@ The robot will be using the following main components:
 	Raspberry Pi 2 (Running Raspbian) - https://www.raspberrypi.org/documentation/
 	CMU Camera 5 (Pixy) - http://www.cmucam.org/projects/cmucam5/wiki
 	RoboClaw 2x15a Controller - https://www.servocity.com/html/roboclaw_2x15a_motor_controlle.html#.VfBm27SppJE
+	MiniMaestro 24 Channel Controller - https://www.servocity.com/html/mini_maestro_24-channel_usb__6.html#.VfNKk7Spqkg
 
 The Camera and Motor Controller both have Python Libraries, and we have verified the Motor Controller is functional.
 We are still validating the CMU Camera. 
