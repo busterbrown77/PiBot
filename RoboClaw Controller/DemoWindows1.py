@@ -5,13 +5,14 @@ import platform
 
 def clear():
 	"Functions need to be at the top & this works cross platform"
-	time.sleep(.69)
+	#time.sleep(.8)
 	subprocess.Popen("cls"if platform.system()=="Windows" else "clear", shell=True)
 	#subprocess.call(["printf","'\033c'"])
 
 def getDetailedStatus():
 	"This clears the screen and updates the values"
 	clear()
+	time.sleep(.5)
 	#Read Speed/Encoder to a String, then print it
 	a = roboclaw.ReadM1Speed()
 	b = roboclaw.ReadM2Speed()
@@ -105,11 +106,12 @@ def getDetailedStatus():
 
 def getStatus():
 	#Read Speed/Encoder to a String, then print it
+	clear()
+	time.sleep(.5)
 	a = roboclaw.ReadM1Speed()
 	b = roboclaw.ReadM2Speed()
 	c = roboclaw.ReadM1Encoder()
 	d = roboclaw.ReadM2Encoder()
-	#clear()
 	#print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
 	print "SPD1 ",a,"\nSPD2 ",b,"\nENC1",c,"\nENC2", d
 
@@ -125,6 +127,7 @@ def intro():
 def drive():
 	#Drive Both Motors max 255
 	print "Drive M1 200"
+	#roboclaw.M1Forward(255)
 	roboclaw.M1Forward(255)
 	print "Drive M2 100"
 	roboclaw.M2Forward(255)
@@ -149,8 +152,9 @@ if version[0]:
 	drive()
 
 	while 1:#clear wait time .5 crashes after 3min 40sec
-		clear()
-		getStatus()
+		getDetailedStatus()
+		time.sleep(1)
+
 	#the error codes for unplugging and reading too quickly are the same
 
 else:
