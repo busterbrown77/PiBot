@@ -183,7 +183,10 @@ def roboclaw_driveTime(motor, speed, time):
 
 #Rudimentary Drive for Distance Command.
 #Must Determine Relation of Encoder Values to Distance.
-def roboclaw_driveDistance(motor, speed, distance):
+#
+#This method calls for values right from the RoboClaw. Running this while a
+#threaded roboclaw get info method will most likely crash immediately.
+def roboclaw_driveDistanceStandalone(motor, speed, distance):
     if speed > 0:
         currentTask = "Drive Forward: "
         if motor == 1:
@@ -192,6 +195,7 @@ def roboclaw_driveDistance(motor, speed, distance):
             RoboClaw.M1Forward(speed)
 
             while 1:
+                time.sleep(serialConnRate)
                 ENC1_CURR = RoboClaw.ReadM1Encoder()
                 if ENC1_START + ENC1_CURR == distance:
                     RoboClaw.M1Forward(0)
@@ -202,6 +206,7 @@ def roboclaw_driveDistance(motor, speed, distance):
             RoboClaw.M2Forward(speed)
 
             while 1:
+                time.sleep(serialConnRate)
                 ENC2_CURR = RoboClaw.ReadM2Encoder()
                 if ENC2_START + ENC2_CURR == distance:
                     RoboClaw.M2Forward(0)
@@ -214,6 +219,7 @@ def roboclaw_driveDistance(motor, speed, distance):
             RoboClaw.M2Forward(speed)
 
             while 1:
+                time.sleep(serialConnRate)
                 ENC1_CURR = RoboClaw.ReadM1Encoder()
                 ENC2_CURR = RoboClaw.ReadM2Encoder()
                 if ENC1_START + ENC1_CURR == distance and ENC2_START + ENC2_CURR == distance:
@@ -228,6 +234,7 @@ def roboclaw_driveDistance(motor, speed, distance):
             RoboClaw.M1Backward(speed)
 
             while 1:
+                time.sleep(serialConnRate)
                 ENC1_CURR = RoboClaw.ReadM1Encoder()
                 if ENC1_START + ENC1_CURR == distance:
                     RoboClaw.M1Backward(0)
@@ -238,6 +245,7 @@ def roboclaw_driveDistance(motor, speed, distance):
             RoboClaw.M2Backward(speed)
 
             while 1:
+                time.sleep(serialConnRate)
                 ENC2_CURR = RoboClaw.ReadM2Encoder()
                 if ENC2_START + ENC2_CURR == distance:
                     RoboClaw.M2Backward(0)
@@ -250,8 +258,94 @@ def roboclaw_driveDistance(motor, speed, distance):
             RoboClaw.M2Backward(speed)
 
             while 1:
+                time.sleep(serialConnRate)
                 ENC1_CURR = RoboClaw.ReadM1Encoder()
                 ENC2_CURR = RoboClaw.ReadM2Encoder()
+                if ENC1_START + ENC1_CURR == distance and ENC2_START + ENC2_CURR == distance:
+                    RoboClaw.M1Backward(0)
+                    RoboClaw.M2Backward(0)
+                    ret
+
+#Rudimentary Drive for Distance Command.
+#Must Determine Relation of Encoder Values to Distance.
+#
+#This method pulls the global encoder variables, meaning it will not work unless
+#the threaded get info methods are running and updating the RC_ENCx variables.
+def roboclaw_driveDistance(motor, speed, distance):
+    if speed > 0:
+        currentTask = "Drive Forward: "
+        if motor == 1:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
+            ENC1_START = RC_ENC1
+            RoboClaw.M1Forward(speed)
+
+            while 1:
+                time.sleep(serialConnRate)
+                ENC1_CURR = RC_ENC1
+                if ENC1_START + ENC1_CURR == distance:
+                    RoboClaw.M1Forward(0)
+                    ret
+        elif motor == 2:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
+            ENC2_START = RC_ENC2
+            RoboClaw.M2Forward(speed)
+
+            while 1:
+                time.sleep(serialConnRate)
+                ENC2_CURR = RC_ENC2
+                if ENC2_START + ENC2_CURR == distance:
+                    RoboClaw.M2Forward(0)
+                    ret
+        elif motor == 3:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
+            ENC1_START = RC_ENC1
+            ENC2_START = RC_ENC2
+            RoboClaw.M1Forward(speed)
+            RoboClaw.M2Forward(speed)
+
+            while 1:
+                time.sleep(serialConnRate)
+                ENC1_CURR = RC_ENC1
+                ENC2_CURR = RC_ENC2
+                if ENC1_START + ENC1_CURR == distance and ENC2_START + ENC2_CURR == distance:
+                    RoboClaw.M1Forward(0)
+                    RoboClaw.M2Forward(0)
+                    ret
+    elif speed < 0:
+        currentTask = "Drive Backward: "
+        if motor == 1:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
+            ENC1_START = RC_ENC1
+            RoboClaw.M1Backward(speed)
+
+            while 1:
+                time.sleep(serialConnRate)
+                ENC1_CURR = RC_ENC1
+                if ENC1_START + ENC1_CURR == distance:
+                    RoboClaw.M1Backward(0)
+                    ret
+        elif motor == 2:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
+            ENC2_START = RC_ENC2
+            RoboClaw.M2Backward(speed)
+
+            while 1:
+                time.sleep(serialConnRate)
+                ENC2_CURR = RC_ENC2
+                if ENC2_START + ENC2_CURR == distance:
+                    RoboClaw.M2Backward(0)
+                    ret
+        elif motor == 3:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
+            ENC1_START = RC_ENC1
+            ENC2_START = RC_ENC2
+            RoboClaw.M1Backward(speed)
+            RoboClaw.M2Backward(speed)
+
+            while 1:
+                time.sleep(serialConnRate)
+                ENC1_CURR = RC_ENC1
+                ENC2_CURR = RC_ENC2
                 if ENC1_START + ENC1_CURR == distance and ENC2_START + ENC2_CURR == distance:
                     RoboClaw.M1Backward(0)
                     RoboClaw.M2Backward(0)
