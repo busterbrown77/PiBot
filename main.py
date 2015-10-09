@@ -102,17 +102,18 @@ def setupRoboClaw():
     for p in active_serial_ports:
         try:
             RC_PORT = p
-            print "Attempting Connection to RoboClaw on " + RC_PORT
+            print "Attempting Connection to RoboClaw on" + RC_PORT
             RoboClaw.open(RC_PORT, serialBaudRate)
         except:
+            print "Failed.\n"
             pass
 
     #Test Connection by Getting RoboClaw Firmware Version.
     try:
         RC_VER = RoboClaw.ReadVersion()
-        print "Connected to RoboClaw (" + RC_VER + ") on port " + RC_PORT
+        print "Connected to RoboClaw (" + RC_VER + ") on port " + RC_PORT + "\n"
     except:
-        print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in?)"
+        print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in / on?)"
         raise SystemExit
 
 #Method to Update the Visual Indicator in Debug Display
