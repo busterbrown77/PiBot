@@ -143,41 +143,42 @@ def roboclaw_driveTime(motor, speed, time):
     if speed > 0:
         currentTask = "Drive Forward: "
         if motor == 1:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             RoboClaw.M1Forward(speed)
             time.sleep(time)
             RoboClaw.M1Forward(0)
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
+
         elif motor == 2:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             RoboClaw.M2Forward(speed)
             time.sleep(time)
             RoboClaw.M2Forward(0)
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
         elif motor == 3:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             RoboClaw.M1Forward(speed)
             RoboClaw.M2Forward(speed)
             time.sleep(time)
             RoboClaw.M1Backward(0)
             RoboClaw.M2Backward(0)
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
     elif speed < 0:
         currentTask = "Drive Backward: "
         if motor == 1:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             RoboClaw.M1Backward(speed)
             time.sleep(time)
             RoboClaw.M1Backward(0)
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
         elif motor == 2:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             RoboClaw.M2Backward(speed)
             time.sleep(time)
             RoboClaw.M2Backward(0)
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
         elif motor == 3:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             RoboClaw.M1Backward(speed)
             RoboClaw.M2Backward(speed)
             time.sleep(time)
             RoboClaw.M1Forward(0)
             RoboClaw.M2Forward(0)
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
 
 #Rudimentary Drive for Distance Command.
 #Must Determine Relation of Encoder Values to Distance.
@@ -185,6 +186,7 @@ def roboclaw_driveDistance(motor, speed, distance):
     if speed > 0:
         currentTask = "Drive Forward: "
         if motor == 1:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             ENC1_START = RoboClaw.ReadM1Encoder()
             RoboClaw.M1Forward(speed)
 
@@ -193,8 +195,8 @@ def roboclaw_driveDistance(motor, speed, distance):
                 if ENC1_START + ENC1_CURR == distance:
                     RoboClaw.M1Forward(0)
                     ret
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
         elif motor == 2:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             ENC2_START = RoboClaw.ReadM2Encoder()
             RoboClaw.M2Forward(speed)
 
@@ -203,8 +205,8 @@ def roboclaw_driveDistance(motor, speed, distance):
                 if ENC2_START + ENC2_CURR == distance:
                     RoboClaw.M2Forward(0)
                     ret
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
         elif motor == 3:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             ENC1_START = RoboClaw.ReadM1Encoder()
             ENC2_START = RoboClaw.ReadM2Encoder()
             RoboClaw.M1Forward(speed)
@@ -217,10 +219,10 @@ def roboclaw_driveDistance(motor, speed, distance):
                     RoboClaw.M1Forward(0)
                     RoboClaw.M2Forward(0)
                     ret
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
     elif speed < 0:
         currentTask = "Drive Backward: "
         if motor == 1:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             ENC1_START = RoboClaw.ReadM1Encoder()
             RoboClaw.M1Backward(speed)
 
@@ -229,8 +231,8 @@ def roboclaw_driveDistance(motor, speed, distance):
                 if ENC1_START + ENC1_CURR == distance:
                     RoboClaw.M1Backward(0)
                     ret
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
         elif motor == 2:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             ENC2_START = RoboClaw.ReadM2Encoder()
             RoboClaw.M2Backward(speed)
 
@@ -239,8 +241,8 @@ def roboclaw_driveDistance(motor, speed, distance):
                 if ENC2_START + ENC2_CURR == distance:
                     RoboClaw.M2Backward(0)
                     ret
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
         elif motor == 3:
+            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
             ENC1_START = RoboClaw.ReadM1Encoder()
             ENC2_START = RoboClaw.ReadM2Encoder()
             RoboClaw.M1Backward(speed)
@@ -253,8 +255,7 @@ def roboclaw_driveDistance(motor, speed, distance):
                     RoboClaw.M1Backward(0)
                     RoboClaw.M2Backward(0)
                     ret
-            currentTask += "M: " + motor + ", SPD: " + speed + ", T: " + time
-
+                    
 #Threaded GetSpeed Method
 #Get Speed and Encoder Data for Both Motors
 def thread_roboclaw_getSpeed(threadName, serialLimit):
@@ -442,7 +443,7 @@ uselessThread = displayThreader(4, "Thread 4", 4)
 #speedThread.start()
 statusThread.start()
 debugDisplayThread.start()
-uselessThread.start()
+#selessThread.start()
 
 roboclaw_driveTime(3, 255, 5)
 #roboclaw_driveDistance(3, 255, 5000)
