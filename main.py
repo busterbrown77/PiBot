@@ -553,7 +553,7 @@ print "Detecting Available Serial Ports..."
 portDetect()
 
 print active_serial_ports,"\n"
-#setupRoboClaw()
+setupRoboClaw()
 
 speedThread = roboclawThreader(1, "Thread 1", 1)
 statusThread = roboclawThreader(2, "Thread 2", 2)
@@ -562,7 +562,7 @@ uselessThread = displayThreader(4, "Thread 4", 4)
 
 print "Debug UI Starting in 3 Seconds..."
 time.sleep(3)
-#debugDisplayThread.start()
+debugDisplayThread.start()
 
 currentTask = "Status thread starting in 2 seconds..."
 time.sleep(1)
