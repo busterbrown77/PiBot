@@ -112,7 +112,7 @@ def setupRoboClaw():
         RC_VER = RoboClaw.ReadVersion()
         print "Connected to RoboClaw (" + RC_VER + ") on port " + RC_PORT
     except:
-        print "Could Not Find RoboClaw Controller. (Is it plugged in?)"
+        print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in?)"
         raise SystemExit
 
 #Method to Update the Visual Indicator in Debug Display
@@ -255,7 +255,7 @@ def roboclaw_driveDistance(motor, speed, distance):
                     RoboClaw.M1Backward(0)
                     RoboClaw.M2Backward(0)
                     ret
-                    
+
 #Threaded GetSpeed Method
 #Get Speed and Encoder Data for Both Motors
 def thread_roboclaw_getSpeed(threadName, serialLimit):
@@ -375,15 +375,15 @@ class roboclawThreader (threading.Thread):
     def run(self):
         if self.task == 1:
             taskdesc = "RoboClaw Speed Updater"
-            print "Starting " + self.name + " - Task: " + taskdesc
+            currentTask = "Starting " + self.name + " - Task: " + taskdesc
             thread_roboclaw_getSpeed(self.name, serialConnRate)
-            print "Exiting " + self.name + " - Task: " + taskdesc
+            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 2:
             taskdesc = "RoboClaw Status Updater"
-            print "Starting " + self.name + " - Task: " + taskdesc
+            currentTask = "Starting " + self.name + " - Task: " + taskdesc
             thread_roboclaw_getStatus(self.name, serialConnRate)
-            print "Exiting " + self.name + " - Task: " + taskdesc
+            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
 
 #Class Handling All Threaded Tasks Related to the LCD Display
 class displayThreader (threading.Thread):
@@ -396,27 +396,27 @@ class displayThreader (threading.Thread):
     def run(self):
         if self.task == 1:
             taskdesc = "Status Display Updater"
-            print "Starting " + self.name + " - Task: " + taskdesc
+            currentTask = "Starting " + self.name + " - Task: " + taskdesc
             thread_display_statusUpdate(self.name, displayRefreshRate, displayBacklight, displayContrast)
-            print "Exiting " + self.name + " - Task: " + taskdesc
+            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 2:
             taskdesc = "Interactive Display Updater"
-            print "Starting " + self.name + " - Task: " + taskdesc
+            currentTask = "Starting " + self.name + " - Task: " + taskdesc
             thread_display_interactiveUpdate(self.name, displayRefreshRate, displayBacklight, displayContrast)
-            print "Exiting " + self.name + " - Task: " + taskdesc
+            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 3:
             taskdesc = "Debug Display"
-            print "Starting " + self.name + " - Task: " + taskdesc
+            currentTask = "Starting " + self.name + " - Task: " + taskdesc
             thread_display_debugUpdate(self.name, displayRefreshRate)
-            print "Exiting " + self.name + " - Task: " + taskdesc
+            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 4:
             taskdesc = "A Useless Time Thread"
-            print "Starting " + self.name + " - Task: " + taskdesc
+            currentTask = "Starting " + self.name + " - Task: " + taskdesc
             thread_display_getTime(self.name, 1, threadCycles)
-            print "Exiting " + self.name + " - Task: " + taskdesc
+            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
 
 #=======================================================================================
 #================== Main Code Begins ===================================================
@@ -426,13 +426,14 @@ clearConsole()
 
 print "--------------------------------------------------------------------------------"
 print "------------------------------- Loading Director -------------------------------"
-print "----------------------- Ensure Everything Is Plugged In. -----------------------"
+print "---------------- Ensure Everything Is Plugged In and Powered on ----------------"
 print "--------------------------------------------------------------------------------"
 print "Detected OS: " + platform.system() + "..."
 
+print "Detecting Available Serial Ports..."
 portDetect()
-print "Active Serial Ports:", active_serial_ports
 
+print active_serial_ports,"\n"
 setupRoboClaw()
 
 speedThread = roboclawThreader(1, "Thread 1", 1)
@@ -442,8 +443,11 @@ uselessThread = displayThreader(4, "Thread 4", 4)
 
 #speedThread.start()
 statusThread.start()
-debugDisplayThread.start()
 #selessThread.start()
+
+print "Debug UI Starting in 3 Seconds..."
+time.sleep(3)
+debugDisplayThread.start()
 
 roboclaw_driveTime(3, 255, 5)
 #roboclaw_driveDistance(3, 255, 5000)
