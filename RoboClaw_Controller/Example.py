@@ -1,42 +1,15 @@
 import roboclaw
 import time
-import os
 
-#This is just a small bit of code to test the RoboClaw python library. 
+import subprocess
+import platform
 
-print "3"
-time.sleep(1)
-print "2"
-time.sleep(1)
-print "1"
-time.sleep(1)
+def clear():
+    #subprocess.Popen( "cls" if platform.system() == "Windows" else "clear", shell=True)
+	print(chr(27) + "[2J")
 
-#Windows comport name
-#roboclaw.Open("COM3",115200)
-#Pi comport name
-#roboclaw.Open("/dev/ttyACM0",115200)
-#OSX comport name
-#roboclaw.Open("/dev/tty.usbmodem1411",115200)
-roboclaw.Open("/dev/tty.usbmodem1451",115200)
-
-#Get version string
-version = roboclaw.ReadVersion()
-if version[0]:
-	print repr(version[1])
-	#Version check succeeded, so controller is connected. 
-	#So now commands can be sent.
-
-	#Reset Encoders to Prevent Crash (Investigate)
-	roboclaw.ResetEncoders()
-
-	#Drive Both Motors at Speed 250
-	print "Drive M1 200"
-	roboclaw.M1Forward(200)
-	print "Drive M2 200"
-	roboclaw.M2Forward(100)
-
-	print "Sleeping 3 Seconds"
-	time.sleep(3)
+def getInfo():
+	clear()
 
 	#Read Speed/Encoder to a String, then print it
 	a = roboclaw.ReadM1Speed()
@@ -129,68 +102,60 @@ if version[0]:
 	if cur[0]:
 		print "M2 Max Current: ",cur[1]/100.0
 
-	#Python Sleep to let motors run for 5 seconds before stopping
-	#print "Sleeping 3 Seconds"
-	time.sleep(3)
+#This is just a small bit of code to test the RoboClaw python library. 
 
-	#Stop Motors
-	print "Stopping Motors"
-	roboclaw.M1Backward(0)
-	roboclaw.M2Backward(0)
+print "3"
+time.sleep(1)
+print "2"
+time.sleep(1)
+print "1"
+time.sleep(1)
 
-	#print "Sleeping 3 Seconds"
-	time.sleep(3)
+#Windows comport name
+#roboclaw.Open("COM3",115200)
+#Pi comport name
+#roboclaw.Open("/dev/ttyACM0",115200)
+#OSX comport name
+roboclaw.Open("/dev/tty.usbmodem1411",115200)   # Left Port
+#roboclaw.Open("/dev/tty.usbmodem1451",115200)    # Right Port
 
-	#Turn by running the motors in opposite directions.
-	#This is rudimentary and will be improved.
-	print "Turn Left"
-	roboclaw.M1Forward(50)
-	roboclaw.M2Backward(50)
+#Get version string
+version = roboclaw.ReadVersion()
+if version[0]:
+	print repr(version[1])
+	#Version check succeeded, so controller is connected. 
+	#So now commands can be sent.
 
-	#Read Speed/Encoder to a String, then print it
-	a = roboclaw.ReadM1Speed()
-	b = roboclaw.ReadM2Speed()
-	c = roboclaw.ReadM1Encoder()
-	d = roboclaw.ReadM2Encoder()
-	print "SPD1 ",a,"\nSPD2 ",b,"\nENC1",c,"\nENC2", d
+	while(1):
+		#Reset Encoders to Prevent Crash (Investigate)
+		roboclaw.ResetEncoders()
 
+		#Drive Both Motors at Speed 250
+		clear()
+		print "Drive M1 200"
+		roboclaw.M1Forward(255)
+		print "Drive M2 200"
+		roboclaw.M2Backward(255)
+		getInfo()
 
-	#print "Sleeping 3 Seconds"
-	time.sleep(3)
+		#Python Sleep to let motors run for 5 seconds before stopping
+		#print "Sleeping 3 Seconds"
+		time.sleep(3)
 
-	print "Stopping Motors"
-	roboclaw.M1Backward(0)
-	roboclaw.M2Backward(0)
+		#Stop Motors
+		clear()
+		print "Stopping Motors"
+		roboclaw.M1Backward(0)
+		roboclaw.M2Backward(0)
 
-	#print "Sleeping 3 Seconds"
-	time.sleep(3)
-
-	print "Turn Right"
-	roboclaw.M1Backward(50)
-	roboclaw.M2Forward(50)
-
-	#Read Speed/Encoder to a String, then print it
-	a = roboclaw.ReadM1Speed()
-	b = roboclaw.ReadM2Speed()
-	c = roboclaw.ReadM1Encoder()
-	d = roboclaw.ReadM2Encoder()
-	print "SPD1 ",a,"\nSPD2 ",b,"\nENC1",c,"\nENC2", d
+		#print "Sleeping 1 Seconds"
+		time.sleep(1)
 
 
-	#print "Sleeping 3 Seconds"
-	time.sleep(3)
-
-	print "Stopping Motors"
-	roboclaw.M1Backward(0)
-	roboclaw.M2Backward(0)
-
-	#Read Speed/Encoder to a String, then print it
-	c = roboclaw.ReadM1Encoder()
-	d = roboclaw.ReadM2Encoder()
-	print "ENC1",c,"\nENC2", d
-
+		clear()
+		print "Stopping Motors"
+		roboclaw.M1Backward(0)
+		roboclaw.M2Backward(0)
 
 else:
 	print "GETVERSION Failed"
-	
-		
