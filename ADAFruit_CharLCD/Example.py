@@ -1,11 +1,9 @@
 #!/usr/bin/python
 # Example using a character LCD plate.
 import time
+import Adafruit_CharLCDPlate as LCD
 
-import Adafruit_CharLCD as LCD
-
-
-# Initialize the LCD using the pins 
+# Initialize the LCD using the pins
 lcd = LCD.Adafruit_CharLCDPlate()
 
 # create some custom characters

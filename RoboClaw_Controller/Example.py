@@ -1,4 +1,4 @@
-import roboclaw
+import RoboClaw as roboclaw
 import time
 
 import subprocess
@@ -23,7 +23,7 @@ def getInfo():
 		print "Error State: ",status[1]
 	else:
 		print "GETERROR Failed"
-	
+
 	temp = roboclaw.ReadTemperature()
 	if temp[0]:
 		print "Temperature: ",temp[1]/10.0
@@ -35,18 +35,18 @@ def getInfo():
 		print "Main Battery: ",mbat[1]/10.0
 	else:
 		print "GETMBAT Failed"
-	
+
 	lbat = roboclaw.ReadLogicBattery()
 	if mbat[0]:
 		print "Logic Battery: ",lbat[1]/10.0
 	else:
 		print "GETLBAT Failed"
-	
+
 	current = roboclaw.ReadCurrents();
 	if current[0]:
 		print "Current M1: ",current[1]/100.0
 		print "Current M2: ",current[2]/100.0
-	
+
 	batt  = roboclaw.ReadLogicBatterySettings()
 	if batt[0]:
 		print "Logic Battery Min: ",batt[1]/10.0," Max: ",batt[2]/10.0
@@ -102,7 +102,7 @@ def getInfo():
 	if cur[0]:
 		print "M2 Max Current: ",cur[1]/100.0
 
-#This is just a small bit of code to test the RoboClaw python library. 
+#This is just a small bit of code to test the RoboClaw python library.
 
 print "3"
 time.sleep(1)
@@ -123,7 +123,7 @@ roboclaw.Open("/dev/tty.usbmodem1411",115200)   # Left Port
 version = roboclaw.ReadVersion()
 if version[0]:
 	print repr(version[1])
-	#Version check succeeded, so controller is connected. 
+	#Version check succeeded, so controller is connected.
 	#So now commands can be sent.
 
 	while(1):
