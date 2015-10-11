@@ -5,7 +5,6 @@ import serial
 import glob
 import sys
 import RoboClaw_Controller.RoboClaw as RoboClaw
-import ADAFruit_CharLCD.IEEEMenu as LCD
 
 #Used for OS Specific Settings
 isLinux = False
@@ -26,7 +25,7 @@ RC_PORT = ""
 RC_VER = ""
 
 #LCD Related Variables
-displayRefreshRate = 0.05
+displayRefreshRate = 0.2
 #displayBacklight = 1
 #displayContrast = 1
 displayIndicatorIndex = 0;
@@ -56,13 +55,10 @@ def osDetect():
     global isWindows
     os = platform.system()
 
-    if os == 'Linux' or os == 'Linux2' or 'cygwin':
+    if os == 'Linux' or os == 'Linux2' or os == 'cygwin':
         #LCD Imports only run code is running on the Pi.
         #No LCD on PCs, along with Pi Specific modifications.
-        #import ADAFruit_CharLCD.Adafruit_CharLCDPlate as LCD
-        #import ADAFruit_CharLCD.Adafruit_I2C as I2C
-        #import ADAFruit_CharLCD.IEEEMenu as Menu
-
+        import ADAFruit_CharLCDPlate.IEEEMenu as LCD
         isLinux = True
     elif os == 'Windows':
         isWindows = True
@@ -99,23 +95,26 @@ def portDetect():
 def setupRoboClaw():
     global RC_PORT
     global RC_VER
+    global currentTask
 
     #Loop Through all Available Ports and try to Connect to RoboClaw.
     for p in active_serial_ports:
         try:
             RC_PORT = p
-            print "Attempting Connection to RoboClaw on" + RC_PORT
-            RoboClaw.open(RC_PORT, serialBaudRate)
+            print "Attempting Connection to RoboClaw on " + RC_PORT
+            RoboClaw.Open(RC_PORT, serialBaudRate)
+            break
         except:
             print "Failed.\n"
             pass
 
     #Test Connection by Getting RoboClaw Firmware Version.
-    try:
-        RC_VER = RoboClaw.ReadVersion()
+    version = RoboClaw.ReadVersion()
+    if version[0]:
+        RC_VER = version[1]
         currentTask = "RoboClaw Connected"
-        print "Connected to RoboClaw (" + RC_VER + ") on port " + RC_PORT + "\n"
-    except:
+        print "Connected to " + RC_VER + "Active Port: " + RC_PORT + "\n"
+    else:
         currentTask = "Conn. RoboClaw Fail"
         print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in / on?)"
         raise SystemExit
@@ -438,13 +437,14 @@ def thread_roboclaw_getStatus(threadName, serialLimit):
        else:
            currentTask = "Failed to read Logic Battery"
 
-#Not Implemented or Final
+#Not Final
 def thread_display_statusUpdate(threadName, refreshRate):
     while 1:
         time.sleep(refreshRate)
 
         #battery, #field, #undef,  curent task
-        LCD.display_menu(RC_MBAT, fieldSide, "", currentTask)
+        screen_vars = [RC_MBAT, fieldSide, "", currentTask]
+        LCD.display_menu(screen_vars)
 
 #Not Implemented or Final
 def thread_display_interactiveUpdate(threadName, refreshRate, backlight, contrast):
@@ -546,7 +546,15 @@ class displayThreader (threading.Thread):
 #=======================================================================================
 osDetect()
 clearConsole()
-statusDisplayThread.start()
+
+speedThread = roboclawThreader(1, "Thread 1", 1)
+statusThread = roboclawThreader(2, "Thread 2", 2)
+debugDisplayThread = displayThreader(3, "Thread 3", 3)
+statusDisplayThread = displayThreader(4, "Thread 4", 1)
+uselessThread = displayThreader(5, "Thread 5", 4)
+
+if isLinux:
+    statusDisplayThread.start()
 
 print "--------------------------------------------------------------------------------"
 print "------------------------------- Loading Director -------------------------------"
@@ -562,12 +570,6 @@ currentTask = ""
 print active_serial_ports,"\n"
 currentTask = "RoboClaw Connect..."
 setupRoboClaw()
-
-speedThread = roboclawThreader(1, "Thread 1", 1)
-statusThread = roboclawThreader(2, "Thread 2", 2)
-debugDisplayThread = displayThreader(3, "Thread 3", 3)
-statusDisplayThread = displayThreader(4, "Thread 4", 1)
-uselessThread = displayThreader(5, "Thread 5", 4)
 
 print "Debug UI Starting in 3 Seconds..."
 time.sleep(3)
@@ -586,7 +588,9 @@ currentTask = "Starting motors in 2 seconds..."
 time.sleep(1)
 currentTask = "Starting motors in 1 second..."
 time.sleep(1)
-roboclaw_driveTime(2, 255, 5)
+#roboclaw_driveTime(2, 255, 5)
+RoboClaw.DriveM1(100)
+RoboClaw.DriveM2(100)
 #roboclaw_driveDistance(2, 255, 5000)
 currentTask = ""
 

@@ -7,8 +7,10 @@
 # and constants are based on code from lrvick and LiquidCrystal.
 # lrvic - https://github.com/lrvick/raspi-hd44780/blob/master/hd44780.py
 # LiquidCrystal - https://github.com/arduino/Arduino/blob/master/libraries/LiquidCrystal/LiquidCrystal.cpp
-import Adafruit_I2C
-import time
+
+from Adafruit_I2C import Adafruit_I2C
+from time import sleep
+
 
 class Adafruit_CharLCDPlate(Adafruit_I2C):
 
@@ -106,7 +108,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
         # Brute force reload ALL registers to known state.  This also
         # sets up all the input pins, pull-ups, etc. for the Pi Plate.
         self.i2c.bus.write_i2c_block_data(
-          self.i2c.address, 0,
+          self.i2c.address, 0, 
           [ 0b00111111,   # IODIRA    R+G LEDs=outputs, buttons=inputs
             self.ddrb ,   # IODIRB    LCD D7=input, Blue LED=output
             0b00111111,   # IPOLA     Invert polarity on button inputs
@@ -286,7 +288,7 @@ class Adafruit_CharLCDPlate(Adafruit_I2C):
         self.i2c.bus.write_byte_data(
           self.i2c.address, self.MCP23017_IOCON_BANK1, 0)
         self.i2c.bus.write_i2c_block_data(
-          self.i2c.address, 0,
+          self.i2c.address, 0, 
           [ 0b00111111,   # IODIRA
             self.ddrb ,   # IODIRB
             0b00000000,   # IPOLA
@@ -485,7 +487,7 @@ if __name__ == '__main__':
            (lcd.UP    , 'Up'    , lcd.BLUE),
            (lcd.DOWN  , 'Down'  , lcd.GREEN),
            (lcd.RIGHT , 'Right' , lcd.VIOLET))
-
+    
     print "Try buttons on plate"
     lcd.clear()
     lcd.message("Try buttons")
