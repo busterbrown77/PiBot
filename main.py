@@ -5,6 +5,7 @@ import serial
 import glob
 import sys
 import RoboClaw_Controller.RoboClaw as RoboClaw
+import ADAFruit_CharLCD.IEEEMenu as LCD
 
 #Used for OS Specific Settings
 isLinux = False
@@ -35,6 +36,7 @@ displayIndicator = "****************************"
 stillRunning = True
 currentTask = ""
 active_serial_ports = []
+fieldSide = 'S'
 
 #Clear Console Utility Command, compatible with all platforms.
 #Used for debug display and general UI.
@@ -111,8 +113,10 @@ def setupRoboClaw():
     #Test Connection by Getting RoboClaw Firmware Version.
     try:
         RC_VER = RoboClaw.ReadVersion()
+        currentTask = "RoboClaw Connected"
         print "Connected to RoboClaw (" + RC_VER + ") on port " + RC_PORT + "\n"
     except:
+        currentTask = "Conn. RoboClaw Fail"
         print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in / on?)"
         raise SystemExit
 
@@ -435,12 +439,12 @@ def thread_roboclaw_getStatus(threadName, serialLimit):
            currentTask = "Failed to read Logic Battery"
 
 #Not Implemented or Final
-def thread_display_statusUpdate(threadName, refreshRate, backlight, contrast):
-    global currentTask
+def thread_display_statusUpdate(threadName, refreshRate):
+    while 1:
+        time.sleep(refreshRate)
 
-    time.sleep(1)
-
-    currentTask = "Status Display Updated"
+        #battery, #field, #undef,  curent task
+        LCD.display_menu(RC_MBAT, fieldSide, "", currentTask)
 
 #Not Implemented or Final
 def thread_display_interactiveUpdate(threadName, refreshRate, backlight, contrast):
@@ -516,7 +520,7 @@ class displayThreader (threading.Thread):
         if self.task == 1:
             taskdesc = "Status Display Updater"
             currentTask = "Starting " + self.name + " - Task: " + taskdesc
-            thread_display_statusUpdate(self.name, displayRefreshRate, displayBacklight, displayContrast)
+            thread_display_statusUpdate(self.name, displayRefreshRate)
             currentTask = "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 2:
@@ -542,6 +546,7 @@ class displayThreader (threading.Thread):
 #=======================================================================================
 osDetect()
 clearConsole()
+statusDisplayThread.start()
 
 print "--------------------------------------------------------------------------------"
 print "------------------------------- Loading Director -------------------------------"
@@ -550,15 +555,19 @@ print "-------------------------------------------------------------------------
 print "Detected OS: " + platform.system() + "..."
 
 print "Detecting Available Serial Ports..."
+currentTask = "Port Detection..."
 portDetect()
+currentTask = ""
 
 print active_serial_ports,"\n"
+currentTask = "RoboClaw Connect..."
 setupRoboClaw()
 
 speedThread = roboclawThreader(1, "Thread 1", 1)
 statusThread = roboclawThreader(2, "Thread 2", 2)
 debugDisplayThread = displayThreader(3, "Thread 3", 3)
-uselessThread = displayThreader(4, "Thread 4", 4)
+statusDisplayThread = displayThreader(4, "Thread 4", 1)
+uselessThread = displayThreader(5, "Thread 5", 4)
 
 print "Debug UI Starting in 3 Seconds..."
 time.sleep(3)
