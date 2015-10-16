@@ -73,11 +73,18 @@ class shutdownScreen(Screen):
         self.offsent = False
     def show(self, valueList):
         if (self.offsent == False):
-	    self.lcd.clear()
+            self.lcd.clear()
             self.lcd.message("Shutdown")
             os.system("sudo halt")
             self.offsent = True
 
+class ConfirmShutdown(Screen):
+    def __init__(self, lcd):
+        Screen.__init__(self, lcd)
+    def show(self, valueList):
+        self.lcd.clear()
+        self.lcd.message("Confirm Shutdown\n Dwn to confirm")
+            
         #Simply a placeholder for specified sub-classes
 class outputScreen(Screen):
     def __init__(self, lcd, text):
@@ -124,8 +131,10 @@ class Menu():
 #select, right, left, up, down
 main = Screen(lcd)
 main.selectScr = main
-second = shutdownScreen(lcd)
-main.append(second, DOWN)
+confirm = ConfirmShutdown(lcd)
+shutdown = shutdownScreen(lcd)
+main.append(confirm, DOWN)
+confirm.append(shutdown, DOWN)
 menu = Menu(main)
 
 
