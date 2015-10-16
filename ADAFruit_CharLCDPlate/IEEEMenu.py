@@ -75,7 +75,7 @@ class shutdownScreen(Screen):
         if (self.offsent == False):
 	    self.lcd.clear()
             self.lcd.message("Shutdown")
-            os.system("halt")
+            os.system("sudo halt")
             self.offsent = True
 
         #Simply a placeholder for specified sub-classes

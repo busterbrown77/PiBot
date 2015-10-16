@@ -6,13 +6,15 @@ import glob
 import sys
 import RoboClaw_Controller.RoboClaw as RoboClaw
 
+import ADAFruit_CharLCDPlate.IEEEMenu as LCD
+
 #Used for OS Specific Settings
 isLinux = False
 isDarwin = False
 isWindows = False
 
 #RoboClaw Related Variables
-serialConnRate = 0.8
+serialConnRate = 0.2
 serialBaudRate = 115200
 RC_SPD1 = 0
 RC_SPD2 = 0
@@ -20,7 +22,6 @@ RC_ENC1 = 0
 RC_ENC2 = 0
 RC_TEMP = 0
 RC_MBAT = 0
-RC_LBAT = 0
 RC_PORT = ""
 RC_VER = ""
 
@@ -58,7 +59,7 @@ def osDetect():
     if os == 'Linux' or os == 'Linux2' or os == 'cygwin':
         #LCD Imports only run code is running on the Pi.
         #No LCD on PCs, along with Pi Specific modifications.
-        import ADAFruit_CharLCDPlate.IEEEMenu as LCD
+        #import ADAFruit_CharLCDPlate.IEEEMenu as LCD
         isLinux = True
     elif os == 'Windows':
         isWindows = True
@@ -99,25 +100,22 @@ def setupRoboClaw():
 
     #Loop Through all Available Ports and try to Connect to RoboClaw.
     for p in active_serial_ports:
-        try:
-            RC_PORT = p
-            print "Attempting Connection to RoboClaw on " + RC_PORT
-            RoboClaw.Open(RC_PORT, serialBaudRate)
-            break
-        except:
-            print "Failed.\n"
-            pass
-
-    #Test Connection by Getting RoboClaw Firmware Version.
-    version = RoboClaw.ReadVersion()
-    if version[0]:
-        RC_VER = version[1]
-        currentTask = "RoboClaw Connected"
-        print "Connected to " + RC_VER + "Active Port: " + RC_PORT + "\n"
-    else:
-        currentTask = "Conn. RoboClaw Fail"
-        print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in / on?)"
-        raise SystemExit
+	RC_PORT = p   
+	print "Attempting Connection to RoboClaw on " + RC_PORT
+        RoboClaw.Open(RC_PORT, serialBaudRate)
+	
+	version = RoboClaw.ReadVersion()
+	if version[0]:
+	    RC_VER = version[1]
+	    currentTask = "RoboClaw Connected"
+            print "Connected to " + RC_VER + "Active Port: " + RC_PORT + "\n"
+	    return
+	else:
+	    print "Failed\n"
+    
+    currentTask = "Conn. RoboClaw Fail"
+    print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in / on?)"
+    raise SystemExit
 
 #Method to Update the Visual Indicator in Debug Display
 def displayIndicatorUpdate():
@@ -141,6 +139,13 @@ def displayIndicatorUpdate():
 
     for i in range(rEnd):
        displayIndicator += "."
+
+def DriveMixSpeedDist(speed, distance):
+    global currentTask
+
+    currentTask = "DR S:",speed," D:",distance 
+    #SPD1, DST1, SPD2, DST2, buffer 
+    RoboClaw.SetMixedSpeedDistance(speed,distance,speed,distance,0)
 
 #Rudimentary Drive for Time Command
 def roboclaw_driveTime(motor, speed, time):
@@ -359,12 +364,13 @@ def thread_roboclaw_getStatusExp(threadName, serialLimit):
     global RC_ENC2
     global RC_TEMP
     global RC_MBAT
-    global RC_LBAT
 
     try:
 
         while 1:
            time.sleep(serialLimit)
+    	   RC_TEMP = 0
+     	   RC_MBAT = 0
 
            try:
                RC_SPD1 = RoboClaw.ReadM1Speed()
@@ -381,21 +387,14 @@ def thread_roboclaw_getStatusExp(threadName, serialLimit):
            temp = RoboClaw.ReadTemperature()
            if temp[0]:
                RC_TEMP = temp[1]/10.0
-           else:
-               currentTask = "Failed to read Tempurature"
+           #else:
+               #currentTask = "Failed to read Tempurature"
 
            mbat = RoboClaw.ReadMainBattery()
            if mbat[0]:
                RC_MBAT = mbat[1]/10.0
-           else:
-               currentTask = "Failed to Read Main Battery"
-
-           lbat = RoboClaw.ReadLogicBattery()
-           if lbat[0]:
-               RC_LBAT = lbat[1]/10.0
-           else:
-               currentTask = "Failed to read Logic Battery"
-
+           #else:
+               #currentTask = "Failed to Read Main Battery"
     except:
         currentTask = "Connection Error (Get Status)"
 
@@ -422,20 +421,14 @@ def thread_roboclaw_getStatus(threadName, serialLimit):
        temp = RoboClaw.ReadTemperature()
        if temp[0]:
            RC_TEMP = temp[1]/10.0
-       else:
-           currentTask = "Failed to read Tempurature"
+       #else:
+           #currentTask = "Failed to read Tempurature"
 
        mbat = RoboClaw.ReadMainBattery()
        if mbat[0]:
            RC_MBAT = mbat[1]/10.0
-       else:
-           currentTask = "Failed to Read Main Battery"
-
-       lbat = RoboClaw.ReadLogicBattery()
-       if lbat[0]:
-           RC_LBAT = lbat[1]/10.0
-       else:
-           currentTask = "Failed to read Logic Battery"
+       #else:
+           #currentTask = "Failed to Read Main Battery"
 
 #Not Final
 def thread_display_statusUpdate(threadName, refreshRate):
@@ -469,7 +462,6 @@ def thread_display_debugUpdate(threadName, refreshRate):
         print " Encoder 2:     ", RC_ENC2
         print " Tempurature:   ", RC_TEMP
         print " Main Battery:  ", RC_MBAT
-        print " Logic Battery: ", RC_LBAT
         print displayIndicator
         print ""
         print currentTask
@@ -485,7 +477,7 @@ def thread_display_getTime(threadName, delay, cycles):
     while count < cycles:
        time.sleep(delay)
        count += 1
-       currentTask = threadName + " - " + time.ctime(time.time())
+       print threadName + " - " + time.ctime(time.time())
 
 #Class Handling All Threaded Tasks Related to the RoboClaw Controller
 class roboclawThreader (threading.Thread):
@@ -498,15 +490,15 @@ class roboclawThreader (threading.Thread):
     def run(self):
         if self.task == 1:
             taskdesc = "RoboClaw Speed Updater"
-            currentTask = "Starting " + self.name + " - Task: " + taskdesc
+            print "Starting " + self.name + " - Task: " + taskdesc
             thread_roboclaw_getSpeed(self.name, serialConnRate)
-            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
+            print "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 2:
             taskdesc = "RoboClaw Status Updater"
-            currentTask = "Starting " + self.name + " - Task: " + taskdesc
+            print "Starting " + self.name + " - Task: " + taskdesc
             thread_roboclaw_getStatus(self.name, serialConnRate)
-            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
+            print "Exiting " + self.name + " - Task: " + taskdesc
 
 #Class Handling All Threaded Tasks Related to the LCD Display
 class displayThreader (threading.Thread):
@@ -519,27 +511,30 @@ class displayThreader (threading.Thread):
     def run(self):
         if self.task == 1:
             taskdesc = "Status Display Updater"
-            currentTask = "Starting " + self.name + " - Task: " + taskdesc
+            print "Starting " + self.name + " - Task: " + taskdesc
             thread_display_statusUpdate(self.name, displayRefreshRate)
-            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
+            print "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 2:
             taskdesc = "Interactive Display Updater"
-            currentTask = "Starting " + self.name + " - Task: " + taskdesc
+            print "Starting " + self.name + " - Task: " + taskdesc
             thread_display_interactiveUpdate(self.name, displayRefreshRate, displayBacklight, displayContrast)
-            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
+            print "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 3:
             taskdesc = "Debug Display"
-            currentTask = "Starting " + self.name + " - Task: " + taskdesc
+            print "Starting " + self.name + " - Task: " + taskdesc
             thread_display_debugUpdate(self.name, displayRefreshRate)
-            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
+            print "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 4:
             taskdesc = "A Useless Time Thread"
-            currentTask = "Starting " + self.name + " - Task: " + taskdesc
+            print "Starting " + self.name + " - Task: " + taskdesc
             thread_display_getTime(self.name, 1, threadCycles)
-            currentTask = "Exiting " + self.name + " - Task: " + taskdesc
+            print "Exiting " + self.name + " - Task: " + taskdesc
+
+    def stop(self):
+        self._stop.set()
 
 #=======================================================================================
 #================== Main Code Begins ===================================================
@@ -570,28 +565,25 @@ currentTask = ""
 print active_serial_ports,"\n"
 currentTask = "RoboClaw Connect..."
 setupRoboClaw()
+RoboClaw.ResetEncoders()
 
 print "Debug UI Starting in 3 Seconds..."
 time.sleep(3)
 debugDisplayThread.start()
 
-currentTask = "Status thread starting in 2 seconds..."
-time.sleep(1)
-currentTask = "Status thread starting in 1 second..."
-time.sleep(1)
-statusThread.start()
-#speedThread.start()
-#selessThread.start()
-currentTask = ""
-
 currentTask = "Starting motors in 2 seconds..."
 time.sleep(1)
 currentTask = "Starting motors in 1 second..."
 time.sleep(1)
-#roboclaw_driveTime(2, 255, 5)
-RoboClaw.DriveM1(100)
-RoboClaw.DriveM2(100)
-#roboclaw_driveDistance(2, 255, 5000)
-currentTask = ""
+#Max Speed 2300
+DriveMixSpeedDist(2300,6000)
+
+statusThread.start()
+#speedThread.start()
+#selessThread.start()
+
+while 1:
+    time.sleep(0.1)
 
 currentTask = "Main Thread has Closed."
+     
