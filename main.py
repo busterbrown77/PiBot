@@ -6,8 +6,6 @@ import glob
 import sys
 import RoboClaw_Controller.RoboClaw as RoboClaw
 
-import ADAFruit_CharLCDPlate.IEEEMenu as LCD
-
 #Used for OS Specific Settings
 isLinux = False
 isDarwin = False
@@ -59,7 +57,7 @@ def osDetect():
     if os == 'Linux' or os == 'Linux2' or os == 'cygwin':
         #LCD Imports only run code is running on the Pi.
         #No LCD on PCs, along with Pi Specific modifications.
-        #import ADAFruit_CharLCDPlate.IEEEMenu as LCD
+        import ADAFruit_CharLCDPlate.IEEEMenu as LCD
         isLinux = True
     elif os == 'Windows':
         isWindows = True
@@ -100,10 +98,10 @@ def setupRoboClaw():
 
     #Loop Through all Available Ports and try to Connect to RoboClaw.
     for p in active_serial_ports:
-	RC_PORT = p   
+	RC_PORT = p
 	print "Attempting Connection to RoboClaw on " + RC_PORT
         RoboClaw.Open(RC_PORT, serialBaudRate)
-	
+
 	version = RoboClaw.ReadVersion()
 	if version[0]:
 	    RC_VER = version[1]
@@ -112,7 +110,7 @@ def setupRoboClaw():
 	    return
 	else:
 	    print "Failed\n"
-    
+
     currentTask = "Conn. RoboClaw Fail"
     print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in / on?)"
     raise SystemExit
@@ -143,263 +141,11 @@ def displayIndicatorUpdate():
 def DriveMixSpeedDist(speed, distance):
     global currentTask
 
-    currentTask = "DR S:",speed," D:",distance 
-    #SPD1, DST1, SPD2, DST2, buffer 
+    currentTask = "DR S:",speed," D:",distance
+    #SPD1, DST1, SPD2, DST2, buffer
     RoboClaw.SetMixedSpeedDistance(speed,distance,speed,distance,0)
 
-#Rudimentary Drive for Time Command
-def roboclaw_driveTime(motor, speed, time):
-    if speed > 0:
-        currentTask = "Drive Forward - MTR:", motor," SPD:", speed, " TME:", time
-        if motor == 1:
-            RoboClaw.M1Forward(speed)
-            time.sleep(time)
-            RoboClaw.M1Forward(0)
-        elif motor == 2:
-            RoboClaw.M2Forward(speed)
-            time.sleep(time)
-            RoboClaw.M2Forward(0)
-        elif motor == 3:
-            RoboClaw.M1Forward(speed)
-            RoboClaw.M2Forward(speed)
-            time.sleep(time)
-            RoboClaw.M1Backward(0)
-            RoboClaw.M2Backward(0)
-    elif speed < 0:
-        currentTask = "Drive Backward - M:", motor," SPD:", speed, " T:", time
-        if motor == 1:
-            RoboClaw.M1Backward(speed)
-            time.sleep(time)
-            RoboClaw.M1Backward(0)
-        elif motor == 2:
-            RoboClaw.M2Backward(speed)
-            time.sleep(time)
-            RoboClaw.M2Backward(0)
-        elif motor == 3:
-            RoboClaw.M1Backward(speed)
-            RoboClaw.M2Backward(speed)
-            time.sleep(time)
-            RoboClaw.M1Forward(0)
-            RoboClaw.M2Forward(0)
-
-#Rudimentary Drive for Distance Command.
-#Must Determine Relation of Encoder Values to Distance. Avg 3 values may be beneficial.
-#
-#This method pulls the global encoder variables, meaning it will not work unless
-#the threaded get info methods are running and updating the RC_ENCx variables.
-def roboclaw_driveDistance(motor, speed, distance):
-    if speed > 0:
-        currentTask = "Drive Forward - M:", motor," SPD:", speed, "DST:", distance
-        if motor == 0:
-            ENC1_START = RC_ENC1
-            RoboClaw.M1Forward(speed)
-
-            while 1:
-                ENC1_CURR = RC_ENC1
-                if ENC1_START + ENC1_CURR == distance:
-                    RoboClaw.M1Forward(0)
-                    ret
-        elif motor == 1:
-            ENC2_START = RC_ENC2
-            RoboClaw.M2Forward(speed)
-
-            while 1:
-                ENC2_CURR = RC_ENC2
-                if ENC2_START + ENC2_CURR == distance:
-                    RoboClaw.M2Forward(0)
-                    ret
-        elif motor == 2:
-            ENC1_START = RC_ENC1
-            ENC2_START = RC_ENC2
-            RoboClaw.M1Forward(speed)
-            RoboClaw.M2Forward(speed)
-
-            while 1:
-                ENC1_CURR = RC_ENC1
-                ENC2_CURR = RC_ENC2
-                if ENC1_START + ENC1_CURR == distance and ENC2_START + ENC2_CURR == distance:
-                    RoboClaw.M1Forward(0)
-                    RoboClaw.M2Forward(0)
-                    ret
-    elif speed < 0:
-        currentTask = "Drive Backward - M:", motor," SPD:", speed, "DST:", distance
-        if motor == 0:
-            ENC1_START = RC_ENC1
-            RoboClaw.M1Backward(speed)
-
-            while 1:
-                ENC1_CURR = RC_ENC1
-                if ENC1_START + ENC1_CURR == distance:
-                    RoboClaw.M1Backward(0)
-                    ret
-        elif motor == 1:
-            ENC2_START = RC_ENC2
-            RoboClaw.M2Backward(speed)
-
-            while 1:
-                ENC2_CURR = RC_ENC2
-                if ENC2_START + ENC2_CURR == distance:
-                    RoboClaw.M2Backward(0)
-                    ret
-        elif motor == 2:
-            ENC1_START = RC_ENC1
-            ENC2_START = RC_ENC2
-            RoboClaw.M1Backward(speed)
-            RoboClaw.M2Backward(speed)
-
-            while 1:
-                ENC1_CURR = RC_ENC1
-                ENC2_CURR = RC_ENC2
-                if ENC1_START + ENC1_CURR == distance and ENC2_START + ENC2_CURR == distance:
-                    RoboClaw.M1Backward(0)
-                    RoboClaw.M2Backward(0)
-                    ret
-
-#Rudimentary Drive for Distance Command.
-#Must Determine Relation of Encoder Values to Distance. Avg 3 values may be beneficial.
-#
-#This method calls for values right from the RoboClaw. Running this while a
-#threaded roboclaw get info method will most likely crash immediately.
-def roboclaw_driveDistanceStandalone(motor, speed, distance):
-    if speed > 0:
-        currentTask = "Drive Forward - M:", motor," SPD:", speed, "DST:", distance
-        if motor == 0:
-            ENC1_START = RoboClaw.ReadM1Encoder()
-            RoboClaw.M1Forward(speed)
-
-            while 1:
-                time.sleep(serialConnRate)
-                ENC1_CURR = RoboClaw.ReadM1Encoder()
-                if ENC1_START + ENC1_CURR == distance:
-                    RoboClaw.M1Forward(0)
-                    ret
-        elif motor == 1:
-            ENC2_START = RoboClaw.ReadM2Encoder()
-            RoboClaw.M2Forward(speed)
-
-            while 1:
-                time.sleep(serialConnRate)
-                ENC2_CURR = RoboClaw.ReadM2Encoder()
-                if ENC2_START + ENC2_CURR == distance:
-                    RoboClaw.M2Forward(0)
-                    ret
-        elif motor == 2:
-            ENC1_START = RoboClaw.ReadM1Encoder()
-            ENC2_START = RoboClaw.ReadM2Encoder()
-            RoboClaw.M1Forward(speed)
-            RoboClaw.M2Forward(speed)
-
-            while 1:
-                time.sleep(serialConnRate)
-                ENC1_CURR = RoboClaw.ReadM1Encoder()
-                ENC2_CURR = RoboClaw.ReadM2Encoder()
-                if ENC1_START + ENC1_CURR == distance and ENC2_START + ENC2_CURR == distance:
-                    RoboClaw.M1Forward(0)
-                    RoboClaw.M2Forward(0)
-                    ret
-    elif speed < 0:
-        currentTask = "Drive Backward - M:", motor," SPD:", speed, "DST:", distance
-        if motor == 0:
-            ENC1_START = RoboClaw.ReadM1Encoder()
-            RoboClaw.M1Backward(speed)
-
-            while 1:
-                time.sleep(serialConnRate)
-                ENC1_CURR = RoboClaw.ReadM1Encoder()
-                if ENC1_START + ENC1_CURR == distance:
-                    RoboClaw.M1Backward(0)
-                    ret
-        elif motor == 1:
-            ENC2_START = RoboClaw.ReadM2Encoder()
-            RoboClaw.M2Backward(speed)
-
-            while 1:
-                time.sleep(serialConnRate)
-                ENC2_CURR = RoboClaw.ReadM2Encoder()
-                if ENC2_START + ENC2_CURR == distance:
-                    RoboClaw.M2Backward(0)
-                    ret
-        elif motor == 2:
-            ENC1_START = RoboClaw.ReadM1Encoder()
-            ENC2_START = RoboClaw.ReadM2Encoder()
-            RoboClaw.M1Backward(speed)
-            RoboClaw.M2Backward(speed)
-
-            while 1:
-                time.sleep(serialConnRate)
-                ENC1_CURR = RoboClaw.ReadM1Encoder()
-                ENC2_CURR = RoboClaw.ReadM2Encoder()
-                if ENC1_START + ENC1_CURR == distance and ENC2_START + ENC2_CURR == distance:
-                    RoboClaw.M1Backward(0)
-                    RoboClaw.M2Backward(0)
-                    ret
-
-#Threaded GetSpeed Method
-#Get Speed and Encoder Data for Both Motors
-def thread_roboclaw_getSpeed(threadName, serialLimit):
-    global currentTask
-    global RC_SPD1
-    global RC_SPD2
-    global RC_ENC1
-    global RC_ENC2
-
-    while 1:
-       time.sleep(serialLimit)
-
-       try:
-           RC_SPD1 = RoboClaw.ReadM1Speed()
-           RC_SPD2 = RoboClaw.ReadM2Speed()
-           RC_ENC1 = RoboClaw.ReadM1Encoder()
-           RC_ENC2 = RoboClaw.ReadM2Encoder()
-       except:
-           currentTask = "Failed to Read Speed & Encoders"
-
 #Threaded GetStatus Method
-#Same as GetSpeed above, but with more data.
-def thread_roboclaw_getStatusExp(threadName, serialLimit):
-    global currentTask
-    global RC_SPD1
-    global RC_SPD2
-    global RC_ENC1
-    global RC_ENC2
-    global RC_TEMP
-    global RC_MBAT
-
-    try:
-
-        while 1:
-           time.sleep(serialLimit)
-    	   RC_TEMP = 0
-     	   RC_MBAT = 0
-
-           try:
-               RC_SPD1 = RoboClaw.ReadM1Speed()
-               RC_SPD2 = RoboClaw.ReadM2Speed()
-           except:
-               currentTask = "Failed to Read Speed"
-
-           try:
-               RC_ENC1 = RoboClaw.ReadM1Encoder()
-               RC_ENC2 = RoboClaw.ReadM2Encoder()
-           except:
-               currentTask = "Failed to Read Encoders"
-
-           temp = RoboClaw.ReadTemperature()
-           if temp[0]:
-               RC_TEMP = temp[1]/10.0
-           #else:
-               #currentTask = "Failed to read Tempurature"
-
-           mbat = RoboClaw.ReadMainBattery()
-           if mbat[0]:
-               RC_MBAT = mbat[1]/10.0
-           #else:
-               #currentTask = "Failed to Read Main Battery"
-    except:
-        currentTask = "Connection Error (Get Status)"
-
-#Threaded GetStatus Method
-#Same as GetSpeed above, but with more data.
 def thread_roboclaw_getStatus(threadName, serialLimit):
     global currentTask
     global RC_SPD1
@@ -408,15 +154,21 @@ def thread_roboclaw_getStatus(threadName, serialLimit):
     global RC_ENC2
     global RC_TEMP
     global RC_MBAT
-    global RC_LBAT
 
     while 1:
        time.sleep(serialLimit)
 
-       RC_SPD1 = RoboClaw.ReadM1Speed()
-       RC_SPD2 = RoboClaw.ReadM2Speed()
-       RC_ENC1 = RoboClaw.ReadM1Encoder()
-       RC_ENC2 = RoboClaw.ReadM2Encoder()
+       try:
+           RC_SPD1 = RoboClaw.ReadM1Speed()
+           RC_SPD2 = RoboClaw.ReadM2Speed()
+       except:
+           currentTask = "Failed to Read Speed"
+
+       try:
+           RC_ENC1 = RoboClaw.ReadM1Encoder()
+           RC_ENC2 = RoboClaw.ReadM2Encoder()
+       except:
+           currentTask = "Failed to Read Encoders"
 
        temp = RoboClaw.ReadTemperature()
        if temp[0]:
@@ -439,14 +191,6 @@ def thread_display_statusUpdate(threadName, refreshRate):
         screen_vars = [RC_MBAT, fieldSide, "", currentTask]
         LCD.display_menu(screen_vars)
 
-#Not Implemented or Final
-def thread_display_interactiveUpdate(threadName, refreshRate, backlight, contrast):
-    global currentTask
-
-    time.sleep(1)
-
-    currentTask = "Interactive Display Updated"
-
 #Threaded Debug Display Method
 #Shows Various Values from the RoboClaw Controller, and other Processes for Testing.
 def thread_display_debugUpdate(threadName, refreshRate):
@@ -467,18 +211,6 @@ def thread_display_debugUpdate(threadName, refreshRate):
         print currentTask
         displayIndicatorUpdate()
 
-#Test Thread Method Implementing a System Clock
-import time
-threadCycles = 50
-def thread_display_getTime(threadName, delay, cycles):
-    global currentTask
-
-    count = 0
-    while count < cycles:
-       time.sleep(delay)
-       count += 1
-       print threadName + " - " + time.ctime(time.time())
-
 #Class Handling All Threaded Tasks Related to the RoboClaw Controller
 class roboclawThreader (threading.Thread):
     def __init__(self, threadID, name, task):
@@ -489,12 +221,6 @@ class roboclawThreader (threading.Thread):
 
     def run(self):
         if self.task == 1:
-            taskdesc = "RoboClaw Speed Updater"
-            print "Starting " + self.name + " - Task: " + taskdesc
-            thread_roboclaw_getSpeed(self.name, serialConnRate)
-            print "Exiting " + self.name + " - Task: " + taskdesc
-
-        elif self.task == 2:
             taskdesc = "RoboClaw Status Updater"
             print "Starting " + self.name + " - Task: " + taskdesc
             thread_roboclaw_getStatus(self.name, serialConnRate)
@@ -516,21 +242,9 @@ class displayThreader (threading.Thread):
             print "Exiting " + self.name + " - Task: " + taskdesc
 
         elif self.task == 2:
-            taskdesc = "Interactive Display Updater"
-            print "Starting " + self.name + " - Task: " + taskdesc
-            thread_display_interactiveUpdate(self.name, displayRefreshRate, displayBacklight, displayContrast)
-            print "Exiting " + self.name + " - Task: " + taskdesc
-
-        elif self.task == 3:
             taskdesc = "Debug Display"
             print "Starting " + self.name + " - Task: " + taskdesc
             thread_display_debugUpdate(self.name, displayRefreshRate)
-            print "Exiting " + self.name + " - Task: " + taskdesc
-
-        elif self.task == 4:
-            taskdesc = "A Useless Time Thread"
-            print "Starting " + self.name + " - Task: " + taskdesc
-            thread_display_getTime(self.name, 1, threadCycles)
             print "Exiting " + self.name + " - Task: " + taskdesc
 
     def stop(self):
@@ -542,11 +256,9 @@ class displayThreader (threading.Thread):
 osDetect()
 clearConsole()
 
-speedThread = roboclawThreader(1, "Thread 1", 1)
-statusThread = roboclawThreader(2, "Thread 2", 2)
-debugDisplayThread = displayThreader(3, "Thread 3", 3)
-statusDisplayThread = displayThreader(4, "Thread 4", 1)
-uselessThread = displayThreader(5, "Thread 5", 4)
+statusThread = roboclawThreader(1, "Thread 1", 1)
+statusDisplayThread = displayThreader(2, "Thread 2", 1)
+debugDisplayThread = displayThreader(2, "Thread 3", 2)
 
 if isLinux:
     statusDisplayThread.start()
@@ -577,13 +289,9 @@ currentTask = "Starting motors in 1 second..."
 time.sleep(1)
 #Max Speed 2300
 DriveMixSpeedDist(2300,6000)
-
 statusThread.start()
-#speedThread.start()
-#selessThread.start()
 
 while 1:
     time.sleep(0.1)
 
 currentTask = "Main Thread has Closed."
-     
