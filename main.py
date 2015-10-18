@@ -151,6 +151,9 @@ def DriveMixSpeedDist(speed, distance):
     #SPD1, DST1, SPD2, DST2, buffer
     RoboClaw.SpeedDistanceM1M2(address, speed, distance, speed, distance, 0)
 
+def TurnRight(value):
+    RoboClaw.TurnRightMixed(address, value)
+
 #Threaded GetStatus Method
 def thread_roboclaw_getStatus(threadName, serialLimit):
     global currentTask
@@ -298,7 +301,7 @@ time.sleep(1)
 #Max Speed 2300
 
 DriveMixSpeedDist(2300,6000)
-
+TurnRight(127)
 
 
 statusThread.start()
