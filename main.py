@@ -151,7 +151,9 @@ def DriveMixSpeedDist(speed, distance):
     #SPD1, DST1, SPD2, DST2, buffer
     RoboClaw.SpeedDistanceM1M2(address, speed, distance, speed, distance, 0)
 
-def TurnRight(value):
+def TurnRight(speed):
+
+    currentTask = "DR S:",speed," D:",distance 
     RoboClaw.TurnRightMixed(address, value)
 
 #Threaded GetStatus Method
