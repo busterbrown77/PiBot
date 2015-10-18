@@ -13,7 +13,7 @@ isDarwin = False
 isWindows = False
 
 #RoboClaw Related Variables
-serialConnRate = 0.2
+serialConnRate = 0
 serialBaudRate = 115200
 RC_SPD1 = 0
 RC_SPD2 = 0
@@ -26,7 +26,7 @@ RC_PORT = ""
 RC_VER = ""
 
 #LCD Related Variables
-displayRefreshRate = 0.2
+displayRefreshRate = 0
 #displayBacklight = 1
 #displayContrast = 1
 displayIndicatorIndex = 0;
@@ -142,7 +142,6 @@ def displayIndicatorUpdate():
 
 def DriveMixSpeedDist(speed, distance):
     global currentTask
-    global add
 
     currentTask = "DR S:" + str(speed) + " D:" + str(distance)
     #SPD1, DST1, SPD2, DST2, buffer
@@ -295,8 +294,9 @@ currentTask = "Starting motors in 2 seconds..."
 time.sleep(1)
 currentTask = "Starting motors in 1 second..."
 time.sleep(1)
+
 #Max Speed 2300
-DriveMixSpeedDist(2300,6000)
+DriveMixSpeedDist(2300,24000)
 statusThread.start()
 
 while 1:
