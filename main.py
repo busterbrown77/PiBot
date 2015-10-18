@@ -7,8 +7,6 @@ import sys
 import time
 import RoboClaw_Controller2.roboclaw as RoboClaw
 
-
-address = 0x80
 #Used for OS Specific Settings
 isLinux = False
 isDarwin = False
@@ -23,6 +21,7 @@ RC_ENC1 = 0
 RC_ENC2 = 0
 RC_TEMP = 0
 RC_MBAT = 0
+RC_ADDR = 0x80
 RC_PORT = ""
 RC_VER = ""
 
@@ -98,22 +97,21 @@ def setupRoboClaw():
     global RC_PORT
     global RC_VER
     global currentTask
-    global address
 
     #Loop Through all Available Ports and try to Connect to RoboClaw.
     for p in active_serial_ports:
-	RC_PORT = p
-	print "Attempting Connection to RoboClaw on " + RC_PORT
+        RC_PORT = p
+        print "Attempting Connection to RoboClaw on " + RC_PORT
         RoboClaw.Open(RC_PORT, serialBaudRate)
 
-	version = RoboClaw.ReadVersion(address)
-	if version[0]:
-	    RC_VER = version[1]
-	    currentTask = "RoboClaw Connected"
-            print "Connected to " + RC_VER + "Active Port: " + RC_PORT + "\n"
-	    return
-	else:
-	    print "Failed\n"
+    version = RoboClaw.ReadVersion(RC_ADDR)
+    if version[0]:
+        RC_VER = version[1]
+        currentTask = "RoboClaw Connected"
+        print "Connected to " + RC_VER + "Active Port: " + RC_PORT + "\n"
+        return
+    else:
+        print "Failed\n"
 
     currentTask = "Conn. RoboClaw Fail"
     print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in / on?)"
@@ -146,10 +144,9 @@ def DriveMixSpeedDist(speed, distance):
     global currentTask
     global add
 
-
-    currentTask = "DR S:",speed," D:",distance
+    currentTask = "DR S:" + str(speed) + " D:" + str(distance)
     #SPD1, DST1, SPD2, DST2, buffer
-    RoboClaw.SpeedDistanceM1M2(address, speed, distance, speed, distance, 0)
+    RoboClaw.SpeedDistanceM1M2(RC_ADDR, speed, distance, speed, distance, 0)
 
 #Threaded GetStatus Method
 def thread_roboclaw_getStatus(threadName, serialLimit):
@@ -160,30 +157,30 @@ def thread_roboclaw_getStatus(threadName, serialLimit):
     global RC_ENC2
     global RC_TEMP
     global RC_MBAT
-    global address
+    global RC_ADDR
 
     while 1:
        time.sleep(serialLimit)
 
        try:
-           RC_SPD1 = RoboClaw.ReadSpeedM1(address)
-           RC_SPD2 = RoboClaw.ReadSpeedM2(address)
+           RC_SPD1 = RoboClaw.ReadSpeedM1(RC_ADDR)
+           RC_SPD2 = RoboClaw.ReadSpeedM2(RC_ADDR)
        except:
            currentTask = "Failed to Read Speed"
 
        try:
-           RC_ENC1 = RoboClaw.ReadEncM1(address)
-           RC_ENC2 = RoboClaw.ReadEncM2(address)
+           RC_ENC1 = RoboClaw.ReadEncM1(RC_ADDR)
+           RC_ENC2 = RoboClaw.ReadEncM2(RC_ADDR)
        except:
            currentTask = "Failed to Read Encoders"
 
-       temp = RoboClaw.ReadTemp(address)
+       temp = RoboClaw.ReadTemp(RC_ADDR)
        if temp[0]:
            RC_TEMP = temp[1]/10.0
        #else:
            #currentTask = "Failed to read Tempurature"
 
-       mbat = RoboClaw.ReadMainBatteryVoltage(address)
+       mbat = RoboClaw.ReadMainBatteryVoltage(RC_ADDR)
        if mbat[0]:
            RC_MBAT = mbat[1]/10.0
        #else:
@@ -234,6 +231,9 @@ class roboclawThreader (threading.Thread):
             thread_roboclaw_getStatus(self.name, serialConnRate)
             print "Exiting " + self.name + " - Task: " + taskdesc
 
+    def stop(self):
+        self._stop.set()
+
 #Class Handling All Threaded Tasks Related to the LCD Display
 class displayThreader (threading.Thread):
     def __init__(self, threadID, name, task):
@@ -264,9 +264,9 @@ class displayThreader (threading.Thread):
 osDetect()
 clearConsole()
 
-statusThread = roboclawThreader(1, "Thread 1", 1)
-statusDisplayThread = displayThreader(2, "Thread 2", 1)
-debugDisplayThread = displayThreader(2, "Thread 3", 2)
+statusThread = roboclawThreader(1, "Status Thread (1)", 1)
+statusDisplayThread = displayThreader(2, "LCD Thread (2)", 1)
+debugDisplayThread = displayThreader(2, "Debug Display Thread (3)", 2)
 
 if isLinux:
     statusDisplayThread.start()
@@ -285,7 +285,7 @@ currentTask = ""
 print active_serial_ports,"\n"
 currentTask = "RoboClaw Connect..."
 setupRoboClaw()
-RoboClaw.ResetEncoders(address)
+RoboClaw.ResetEncoders(RC_ADDR)
 
 print "Debug UI Starting in 3 Seconds..."
 time.sleep(3)
@@ -296,11 +296,7 @@ time.sleep(1)
 currentTask = "Starting motors in 1 second..."
 time.sleep(1)
 #Max Speed 2300
-
 DriveMixSpeedDist(2300,6000)
-
-
-
 statusThread.start()
 
 while 1:
