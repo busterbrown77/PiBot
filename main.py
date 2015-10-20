@@ -6,6 +6,7 @@ import glob
 import sys
 import time
 import RoboClaw_Controller2.roboclaw as RoboClaw
+import MiniMaestro_Controller.maestro as MiniMaestro
 
 #Used for OS Specific Settings
 isLinux = False
@@ -23,7 +24,10 @@ RC_TEMP = 0
 RC_MBAT = 0
 RC_ADDR = 0x80
 RC_PORT = ""
-RC_VER = ""
+RC_VERS = ""
+
+#MiniMarestro Related Varaibles
+MM_PORT = ""
 
 #LCD Related Variables
 displayRefreshRate = 0
@@ -95,7 +99,7 @@ def portDetect():
 #Attempt to Connect to the RoboClaw using previously found ports.
 def setupRoboClaw():
     global RC_PORT
-    global RC_VER
+    global RC_VERS
     global currentTask
 
     #Loop Through all Available Ports and try to Connect to RoboClaw.
@@ -106,15 +110,37 @@ def setupRoboClaw():
 
     version = RoboClaw.ReadVersion(RC_ADDR)
     if version[0]:
-        RC_VER = version[1]
+        RC_VERS = version[1]
         currentTask = "RoboClaw Connected"
-        print "Connected to " + RC_VER + "Active Port: " + RC_PORT + "\n"
+        print "Connected to " + RC_VERS + "Active Port: " + RC_PORT + "\n"
         return
     else:
         print "Failed\n"
 
     currentTask = "Conn. RoboClaw Fail"
     print "Could Not Find RoboClaw Controller on Available Ports. (Is it plugged in / on?)"
+    raise SystemExit
+
+#Attempt to Connect to the RoboClaw using previously found ports.
+def setupMiniMaestro():
+    global MM_PORT
+    global currentTask
+
+    #Loop Through all Available Ports and try to Connect to MiniMaestro.
+    for p in active_serial_ports:
+        MM_PORT = p
+        print "Attempting Connection to MiniMaestro on " + MM_PORT
+        MM = MiniMaestro.Controller(MM_PORT)
+
+        try:
+            MM.getMovingState()
+            currentTask = "MiniMarstro Connected"
+            print "Connected to " + RC_VER + "Active Port: " + RC_PORT + "\n"
+        except:
+            print "Failed\n"
+
+    currentTask = "Conn. MMaestro Fail"
+    print "Could Not Find MiniMaestro Controller on Available Ports. (Is it plugged in / on?)"
     raise SystemExit
 
 #Method to Update the Visual Indicator in Debug Display
@@ -214,7 +240,6 @@ def thread_display_debugUpdate(threadName, refreshRate):
         print currentTask
         displayIndicatorUpdate()
 
-
 #Class Handling All Threaded Tasks Related to the RoboClaw Controller
 class roboclawThreader (threading.Thread):
     def __init__(self, threadID, name, task):
@@ -280,24 +305,30 @@ print "Detecting Available Serial Ports..."
 currentTask = "Port Detection..."
 portDetect()
 currentTask = ""
-
 print active_serial_ports,"\n"
-currentTask = "RoboClaw Connect..."
-setupRoboClaw()
-RoboClaw.ResetEncoders(RC_ADDR)
 
-print "Debug UI Starting in 3 Seconds..."
-time.sleep(3)
-debugDisplayThread.start()
+#currentTask = "RoboClaw Connect..."
+#setupRoboClaw()
+#RoboClaw.ResetEncoders(RC_ADDR)
 
-currentTask = "Starting motors in 2 seconds..."
-time.sleep(1)
-currentTask = "Starting motors in 1 second..."
-time.sleep(1)
+currentTask = "MiniMaestro Connect..."
+setupMiniMaestro()
+
+isConnected = MM.getMovingState()
+print "MM getMovingState(): " + isConnected
+
+#print "Debug UI Starting in 3 Seconds..."
+#time.sleep(3)
+#debugDisplayThread.start()
+
+#currentTask = "Starting motors in 2 seconds..."
+#time.sleep(1)
+#currentTask = "Starting motors in 1 second..."
+#time.sleep(1)
 
 #Max Speed 2300
-DriveMixSpeedDist(2300,24000)
-statusThread.start()
+#DriveMixSpeedDist(2300,24000)
+#statusThread.start()
 
 while 1:
     time.sleep(0.1)
