@@ -10,9 +10,8 @@ The robot will be using the following main components:
 	ADAFruit LCD with Keypad - http://www.adafruit.com/products/1109
 
 The Camera and Motor Controller both have Python Libraries, and we have verified the Motor Controller is functional.
-We are still validating the CMU Camera. 
+We are still validating the CMU Camera, and whether or not it is sufficient for our needs. A revival of the RoboVision code (on this repo) may be a possibility.
 
-The main structure of the robot code has not been decided, and many things on this page may change. Additional Components
-such as screens will also be added in the future.
+The main robot code is PiBot.py which uses a threaded system to manage components seperately and to isolate potential device failures programmatically (If the screen fails for some reason, the motor controller code is not affected it is on a seperate thread, etc.). As of now all components are functional except the MiniMaestro controller, which is moreso due to it's poor Python support.
 
-Please Note this Page is a WIP and will change.
+
